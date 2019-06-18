@@ -16,7 +16,7 @@ exports.initial = (req, res, next) => {
 }
 
 function onNameReceived(req, res, next){
-    let splited = req.query.body.answer.text.split(" ");
+    let splited = req.body.answer.text.split(" ");
     name = splited[splited.length - 1];
     const response = {
         type: "text",
@@ -45,7 +45,7 @@ function isValidDate(dateString) {
 }
 
 exports.handleResponse = (req, res, next) => {
-    const data = req.query.body;
+    const data = req.body;
     if(data.text.startsWith("my name is")){
         onNameReceived(data);
     }else if(data.text.toLowerCase() == "yes" || data.text.toLowerCase() == "yep"){
@@ -68,7 +68,7 @@ exports.handleResponse = (req, res, next) => {
 }
 
 function getNextBirthday(req, res, next) {
-    var birthday = req.query.body.text.split("-");
+    var birthday = req.body.text.split("-");
     var today = new Date();
     var next = new Date(today.getFullYear(), parseInt(birthday[1])-1, parseInt(birthday[2]));
     if(today>next) next.setFullYear(y+1);
@@ -78,4 +78,12 @@ function getNextBirthday(req, res, next) {
         text: Math.round((next-today)/8.64e7)
     }
     return res.json(response);
+}
+
+exports.sendMesseges = function(req, res, next){
+    return res.json(messages);
+}
+
+exports.pushMessage = function(req){
+    return messages.push(req.body);
 }
