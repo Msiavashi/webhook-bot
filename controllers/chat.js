@@ -51,13 +51,19 @@ exports.handleResponse = (req, res, next) => {
     }else if(data.text.toLowerCase() == "yes" || data.text.toLowerCase() == "yep"){
         onAccept(req, res, next);
     }else if(data.text.toLowerCase() == "no" || data.text.toLowerCase() == "nah"){
-        return res.send({
+        return res.json({
             type: "text",
             elements: [], 
             text: "GoodBye !!!"
         });
     }else if (isValidDate(data.text)){
         getNextBirthday(req, res, next);
+    }else{
+        res.json({
+            type: "text",
+            elements: [],
+            text: "sorry, i didn't understant"
+        })
     }
 }
 
