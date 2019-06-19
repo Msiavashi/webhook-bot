@@ -3,26 +3,27 @@ var userName;
 
 
 
-exports.initial = (req, res, next) => {
+function initial(req, res, next){
     const data = {
         challenge: req.query.challenge,
-        data: {
-            type: "text",
-            elements: [], 
-            text: "Hi, What is your name?"
-        }
+        type: "text",
+        elements: [], 
+        text: "Hi, What is your name?"
     }
+    pushMessage(data);
     return res.json(data);
 }
 
 function onNameReceived(req, res, next){
-    let splited = req.body.answer.text.split(" ");
+    console.log(req.body);
+    let splited = req.body.text.split(" ");
     name = splited[splited.length - 1];
     const response = {
         type: "text",
-        elements: [], 
+        elements: ["yes", "no"], 
         text: "Thanks " + name + " would you know your next birthday?"
     }
+    pushMessage(response);
     return res.json(response);
 }
 
@@ -32,6 +33,7 @@ function onAccept(req, res, next){
         elements: [],
         text: "please enter your birthday (YYYY-MM-DD)"
     }
+    pushMessage(response);
     return res.json(response);
 }
 
@@ -44,26 +46,30 @@ function isValidDate(dateString) {
   return d.toISOString().slice(0,10) === dateString;
 }
 
-exports.handleResponse = (req, res, next) => {
+function handleResponse(req, res, next){
     const data = req.body;
     if(data.text.startsWith("my name is")){
-        onNameReceived(data);
+        onNameReceived(req, res, next);
     }else if(data.text.toLowerCase() == "yes" || data.text.toLowerCase() == "yep"){
         onAccept(req, res, next);
     }else if(data.text.toLowerCase() == "no" || data.text.toLowerCase() == "nah"){
-        return res.json({
+        const repsonse = {
             type: "text",
             elements: [], 
             text: "GoodBye !!!"
-        });
+        }
+        pushMessage(response);
+        return res.json();
     }else if (isValidDate(data.text)){
         getNextBirthday(req, res, next);
     }else{
-        res.json({
+        const response = {
             type: "text",
             elements: [],
             text: "sorry, i didn't understant"
-        })
+        }
+        pushMessage(response);
+        res.json(response);
     }
 }
 
@@ -71,19 +77,46 @@ function getNextBirthday(req, res, next) {
     var birthday = req.body.text.split("-");
     var today = new Date();
     var next = new Date(today.getFullYear(), parseInt(birthday[1])-1, parseInt(birthday[2]));
-    if(today>next) next.setFullYear(y+1);
-    const repsonse = {
+    today.setHours(0, 0, 0, 0);
+    if(today > next) next.setFullYear(today.getFullYear()+1);
+    const response = {
         type: "text",
         elements: [],
-        text: Math.round((next-today)/8.64e7)
+        text: "There are " + Math.round((next-today)/8.64e7).toString() + " days left until your next birthday"
     }
+    pushMessage(response);
     return res.json(response);
 }
 
-exports.sendMesseges = function(req, res, next){
+function sendMessages(req, res, next){
+    for (let [index, element] of messages.entries()){
+        console.log(element);
+        element.id = index;
+    }
     return res.json(messages);
 }
 
-exports.pushMessage = function(req){
-    return messages.push(req.body);
+function pushMessage(data){
+    return messages.push(data);
+}
+
+function deleteMessage(req, res, next){
+    const id = req.params.id;
+    if(id > 0 && id < messages.length){
+        messages.splice(id, 1);
+        return res.sendStatus(200);
+    }
+    return res.sendStatus(400);
+}
+
+function getMessageById(req, res, next){
+    return res.json(messages[req.params.id]);
+}
+
+module.exports = {
+    pushMessage: pushMessage,
+    sendMessages: sendMessages,
+    handleResponse: handleResponse,
+    initial: initial
+
 }
